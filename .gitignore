@@ -1,0 +1,6 @@
+/.gradle/
+/.idea/artifacts/
+/.idea/libraries/
+/.idea/workspace.xml/
+/build/
+/out/
