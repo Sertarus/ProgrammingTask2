@@ -39,6 +39,9 @@ public class TransposeLauncher {
             parser.printUsage(System.err);
             return;
         }
+        if (name == null || !name.contentEquals("transpose")) {
+            throw new IllegalArgumentException("transpose [-a num] [-t] [-r] [-o ofile] [file]");
+        }
         if (inputFileName != null && !new File(inputFileName).exists()) {
             throw new IOException("Wrong input file name");
         }
@@ -79,7 +82,7 @@ public class TransposeLauncher {
                         currentElement.append(" ");
                     }
                     currentElement.append(listOfStrings.get(j));
-                } else if (space != null) {
+                } else {
                     currentElement.append(listOfStrings.get(j));
                     while (currentElement.length() < space) {
                         currentElement.append(" ");

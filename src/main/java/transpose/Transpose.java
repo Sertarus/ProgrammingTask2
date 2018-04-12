@@ -15,7 +15,9 @@ public class Transpose {
             }
             int resultHeight = 0;
             for (String[] element : ReceivedStrings) {
-                if (element.length > resultHeight) resultHeight = element.length;
+                if (element.length > resultHeight) {
+                    resultHeight = element.length;
+                }
             }
             ArrayList<ArrayList<String>> result = new ArrayList<>();
             for (int i = 0; i < resultHeight; i++) {
@@ -44,9 +46,5 @@ public class Transpose {
         try (FileInputStream inputStream = new FileInputStream(inputName)) {
             return toTranspose(inputStream);
         }
-    }
-
-    public static void main(String[] args) throws IOException {
-        new TransposeLauncher().main(new String[]{"transpose", "src/test/java/filesForTests/1.txt"});
     }
 }
