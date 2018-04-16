@@ -3,14 +3,11 @@ package transpose;
 import org.kohsuke.args4j.*;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.util.List;
 
 public class TransposeLauncher {
 
-    @Argument(required = true, metaVar = "transpose")
-    private String name;
-
-    @Option(name = "-o", metaVar = "OutputName", usage = "Output file name")
+    @Option(name = "-o", metaVar = "outputName", usage = "Output file name")
     private String outputFileName;
 
     @Option(name = "-a", metaVar = "num", usage = "Sets space for every word")
@@ -22,7 +19,7 @@ public class TransposeLauncher {
     @Option(name = "-r", usage = "Sets the alignment of the word to the right in the space allocated to it")
     private boolean r;
 
-    @Argument(usage = "Input file name", metaVar = "InputName", index = 1)
+    @Argument(usage = "Input file name", metaVar = "inputName")
     private String inputFileName;
 
     public static void main(String[] args) throws IOException {
@@ -39,37 +36,32 @@ public class TransposeLauncher {
             parser.printUsage(System.err);
             return;
         }
-        if (name == null || !name.contentEquals("transpose")) {
-            throw new IllegalArgumentException("transpose [-a num] [-t] [-r] [-o ofile] [file]");
-        }
         if (inputFileName != null && !new File(inputFileName).exists()) {
             throw new IOException("Wrong input file name");
         }
-        if (outputFileName != null && !new File(outputFileName).exists()) {
-            throw new IOException("Wrong output file name");
-        }
         Transpose transpose = new Transpose();
+        InputStream in = new BufferedInputStream(System.in);
         if (inputFileName != null) {
-            ArrayList<ArrayList<String>> result = transpose.toTranspose(inputFileName);
-            if (outputFileName != null) {
-                writeToFile(setOptions(result));
-            } else {
-                writeToConsole(setOptions(result), System.out);
-            }
+            in = new FileInputStream(inputFileName);
+        }
+        List<List<String>> result = transpose.toTranspose(in);
+        if (outputFileName != null) {
+            writeToFile(setOptions(result));
         } else {
-            ArrayList<ArrayList<String>> result = transpose.toTranspose(System.in);
-            if (outputFileName != null) {
-                writeToFile(setOptions(result));
-            } else {
-                writeToConsole(setOptions(result), System.out);
-            }
+            writeToConsole(setOptions(result), System.out);
         }
     }
 
-    private ArrayList<ArrayList<String>> setOptions(ArrayList<ArrayList<String>> matrixOfStrings) {
-        if (space == null && (t || r)) space = 10;
-        else if (space == null) space = 1;
-        for (ArrayList<String> listOfStrings : matrixOfStrings) {
+    private List<List<String>> setOptions(List<List<String>> matrixOfStrings) {
+        if (space == null && (t || r)) {
+            space = 10;
+        } else if (space == null) {
+            space = 1;
+        }
+        if (space <= 0) {
+            throw new IllegalArgumentException("Num can not be less than 1");
+        }
+        for (List<String> listOfStrings : matrixOfStrings) {
             for (int j = 0; j < listOfStrings.size(); j++) {
                 if (t) {
                     if (listOfStrings.get(j).length() > space) {
@@ -78,15 +70,11 @@ public class TransposeLauncher {
                 }
                 StringBuilder currentElement = new StringBuilder();
                 if (r) {
-                    while (currentElement.length() < space - listOfStrings.get(j).length()) {
-                        currentElement.append(" ");
-                    }
+                    align(currentElement, space - listOfStrings.get(j).length());
                     currentElement.append(listOfStrings.get(j));
                 } else {
                     currentElement.append(listOfStrings.get(j));
-                    while (currentElement.length() < space) {
-                        currentElement.append(" ");
-                    }
+                    align(currentElement, space);
                 }
                 String resultString = currentElement.toString();
                 if (!resultString.contentEquals("")) {
@@ -97,7 +85,13 @@ public class TransposeLauncher {
         return matrixOfStrings;
     }
 
-    private void writeToConsole(ArrayList<ArrayList<String>> result, OutputStream out) throws IOException {
+    private void align(StringBuilder string, int space) {
+        while (string.length() < space) {
+            string.append(" ");
+        }
+    }
+
+    private void writeToConsole(List<List<String>> result, OutputStream out) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out))) {
             for (int i = 0; i < result.size(); i++) {
                 for (int j = 0; j < result.get(i).size(); j++) {
@@ -113,7 +107,7 @@ public class TransposeLauncher {
         }
     }
 
-    private void writeToFile(ArrayList<ArrayList<String>> result) throws IOException {
+    private void writeToFile(List<List<String>> result) throws IOException {
         FileOutputStream writer = new FileOutputStream(outputFileName);
         writeToConsole(result, writer);
     }
