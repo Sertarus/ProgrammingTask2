@@ -5,7 +5,7 @@ import java.util.*;
 
 public class Transpose {
 
-    public List<List<String>> toTranspose(InputStream in) throws IOException {
+    public static List<List<String>> toTranspose(InputStream in) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
             List<String[]> receivedStrings = new ArrayList<>();
             String currentString = reader.readLine();

@@ -36,15 +36,17 @@ public class TransposeLauncher {
             parser.printUsage(System.err);
             return;
         }
-        if (inputFileName != null && !new File(inputFileName).exists()) {
+        if (inputFileName != null && !new File(inputFileName).isFile()) {
             throw new IOException("Wrong input file name");
         }
-        Transpose transpose = new Transpose();
-        InputStream in = new BufferedInputStream(System.in);
-        if (inputFileName != null) {
-            in = new FileInputStream(inputFileName);
+        List<List<String>> result;
+        if (inputFileName == null) {
+            result = Transpose.toTranspose(System.in);
+        } else {
+            try (InputStream in = new FileInputStream(inputFileName)) {
+                result = Transpose.toTranspose(in);
+            }
         }
-        List<List<String>> result = transpose.toTranspose(in);
         if (outputFileName != null) {
             writeToFile(setOptions(result));
         } else {
@@ -108,7 +110,8 @@ public class TransposeLauncher {
     }
 
     private void writeToFile(List<List<String>> result) throws IOException {
-        FileOutputStream writer = new FileOutputStream(outputFileName);
-        writeToConsole(result, writer);
+        try (FileOutputStream writer = new FileOutputStream(outputFileName)) {
+            writeToConsole(result, writer);
+        }
     }
 }
