@@ -2,9 +2,7 @@ package transpose;
 
 import org.junit.jupiter.api.Test;
 
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,6 +27,6 @@ public class TransposeTest {
             }});
         }};
         assertEquals(expectedResult,
-                new Transpose().toTranspose(new FileInputStream("src/test/java/filesForTests/1.txt")));
+                Transpose.toTranspose(new FileInputStream("src/test/java/filesForTests/1.txt")));
     }
 }

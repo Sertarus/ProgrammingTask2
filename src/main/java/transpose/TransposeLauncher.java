@@ -22,11 +22,11 @@ public class TransposeLauncher {
     @Argument(usage = "Input file name", metaVar = "inputName")
     private String inputFileName;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         new TransposeLauncher().launch(args);
     }
 
-    private void launch(String[] args) throws IOException {
+    private void launch(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
         try {
             parser.parseArgument(args);
@@ -36,17 +36,26 @@ public class TransposeLauncher {
             parser.printUsage(System.err);
             return;
         }
-        if (inputFileName != null && !new File(inputFileName).isFile()) {
-            throw new IOException("Wrong input file name");
-        }
         List<List<String>> result;
         if (inputFileName == null) {
-            result = Transpose.toTranspose(System.in);
+            try {
+                result = Transpose.toTranspose(System.in);
+            } catch (IOException e) {
+                System.err.print("Reading error: " + e.getMessage());
+                return;
+            }
         } else {
             try (InputStream in = new FileInputStream(inputFileName)) {
                 result = Transpose.toTranspose(in);
+            } catch (FileNotFoundException e) {
+                System.err.print("Wrong input file name");
+                return;
+            } catch (IOException e) {
+                System.err.print("Reading from the file error: " + e.getMessage());
+                return;
             }
         }
+        if (setOptions(result) == null) return;
         if (outputFileName != null) {
             writeToFile(setOptions(result));
         } else {
@@ -61,7 +70,8 @@ public class TransposeLauncher {
             space = 1;
         }
         if (space <= 0) {
-            throw new IllegalArgumentException("Num can not be less than 1");
+            System.err.print("Num can not be less than 1");
+            return null;
         }
         for (List<String> listOfStrings : matrixOfStrings) {
             for (int j = 0; j < listOfStrings.size(); j++) {
@@ -70,15 +80,12 @@ public class TransposeLauncher {
                         listOfStrings.set(j, listOfStrings.get(j).substring(0, space));
                     }
                 }
-                StringBuilder currentElement = new StringBuilder();
+                String resultString;
                 if (r) {
-                    align(currentElement, space - listOfStrings.get(j).length());
-                    currentElement.append(listOfStrings.get(j));
+                    resultString = align(listOfStrings.get(j), space, true);
                 } else {
-                    currentElement.append(listOfStrings.get(j));
-                    align(currentElement, space);
+                    resultString = align(listOfStrings.get(j), space, false);
                 }
-                String resultString = currentElement.toString();
                 if (!resultString.contentEquals("")) {
                     listOfStrings.set(j, resultString);
                 }
@@ -87,13 +94,15 @@ public class TransposeLauncher {
         return matrixOfStrings;
     }
 
-    private void align(StringBuilder string, int space) {
-        while (string.length() < space) {
-            string.append(" ");
+    private String align(String string, int space, boolean right) {
+        if (right) {
+            return String.format("%" + space + "s", string);
+        } else {
+            return String.format("%-" + space + "s", string);
         }
     }
 
-    private void writeToConsole(List<List<String>> result, OutputStream out) throws IOException {
+    private void writeToConsole(List<List<String>> result, OutputStream out) {
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out))) {
             for (int i = 0; i < result.size(); i++) {
                 for (int j = 0; j < result.get(i).size(); j++) {
@@ -106,12 +115,16 @@ public class TransposeLauncher {
                 }
                 if (i != result.size() - 1) writer.newLine();
             }
+        } catch (IOException e) {
+            System.err.println("Output error: " + e.getMessage());
         }
     }
 
-    private void writeToFile(List<List<String>> result) throws IOException {
+    private void writeToFile(List<List<String>> result) {
         try (FileOutputStream writer = new FileOutputStream(outputFileName)) {
             writeToConsole(result, writer);
+        } catch (IOException e) {
+            System.err.println("Outputting to file error: " + e.getMessage());
         }
     }
 }

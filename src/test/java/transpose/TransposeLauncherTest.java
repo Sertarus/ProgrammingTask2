@@ -1,21 +1,18 @@
 package transpose;
 
-import org.junit.jupiter.api.Assertions;
+        import static org.junit.jupiter.api.Assertions.*;
 
-import static org.junit.jupiter.api.Assertions.*;
+        import org.junit.jupiter.api.Test;
 
-import org.junit.jupiter.api.Test;
+        import java.io.*;
 
-import java.io.*;
-
-import org.apache.commons.io.FileUtils;
+        import org.apache.commons.io.FileUtils;
 
 
 public class TransposeLauncherTest {
     @Test
     void main() throws IOException {
-        final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-
+        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
         String[] args = {"src/test/java/filesForTests/1.txt"};
         TransposeLauncher.main(args);
@@ -53,10 +50,7 @@ public class TransposeLauncherTest {
         assertEquals("12345     4     7\r\n    2     5     8\r\n    3     6", outContent.toString());
         outContent.reset();
 
-        String[] args6 = {"123"};
-        Assertions.assertThrows(IOException.class, () -> TransposeLauncher.main(args6));
-
-        System.setErr(new PrintStream(outContent));
+        System.setErr(new PrintStream(outContent, false, "Windows-1251"));
         String[] args7 = {"-123"};
         TransposeLauncher.main(args7);
         assertEquals("\"-123\" is not a valid option\r\n" +
@@ -69,12 +63,6 @@ public class TransposeLauncherTest {
                 " -t            : Cuts the word if it goes beyond the space allocated to it\r\n" +
                 "                 (default: false)\r\n", outContent.toString());
         outContent.reset();
-
-        String[] args8 = {"123"};
-        Assertions.assertThrows(IOException.class, () -> TransposeLauncher.main(args8));
-
-        String[] args9 = {"-a", "-7", "src/test/java/filesForTests/1.txt"};
-        Assertions.assertThrows(IllegalArgumentException.class, () -> TransposeLauncher.main(args9));
 
         File test = new File("src/test/java/filesForTests/3.txt");
         String[] args10 = {"-o", "src/test/java/filesForTests/3.txt", "src/test/java/filesForTests/1.txt"};
@@ -96,5 +84,38 @@ public class TransposeLauncherTest {
         TransposeLauncher.main(args12);
         assertEquals("1 4 7\r\n2 5 8\r\n3 6", FileUtils.readFileToString(test));
         test.delete();
+
+        System.setOut(new PrintStream(outContent, false, "Windows-1251"));
+        String[] args13 = {"src/test"};
+        TransposeLauncher.main(args13);
+        assertEquals("Wrong input file name", outContent.toString());
+        outContent.reset();
+
+        BufferedInputStream in = new BufferedInputStream(System.in);
+        InputStream old = System.in;
+        System.setIn(in);
+        in.close();
+        String[] args14 = {};
+        TransposeLauncher.main(args14);
+        assertEquals("Reading error: Stream closed", outContent.toString());
+        System.setIn(old);
+        outContent.reset();
+
+        test.createNewFile();
+        RandomAccessFile raFile = new RandomAccessFile(test, "rw");
+        raFile.getChannel().lock();
+        String[] args15 = {"src/test/java/filesForTests/3.txt"};
+        TransposeLauncher.main(args15);
+        assertEquals("Reading from the file error: " +
+                "Процесс не может получить доступ к файлу," +
+                " так как часть этого файла заблокирована другим процессом", outContent.toString());
+        raFile.close();
+        test.delete();
+        outContent.reset();
+
+        String[] args16 = {"-a", "-5"};
+        TransposeLauncher.main(args16);
+        assertEquals("Num can not be less than 1", outContent.toString());
+        outContent.reset();
     }
 }
